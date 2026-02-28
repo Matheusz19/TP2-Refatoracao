@@ -1,9 +1,6 @@
 package TP2;
 
-import TP2.dependencies.Config;
-import TP2.dependencies.Emailer;
-import TP2.dependencies.Logger;
-import TP2.dependencies.Project;
+import TP2.dependencies.*;
 
 public class Pipeline {
     private final Config config;
@@ -17,9 +14,15 @@ public class Pipeline {
     }
 
     public void run(Project project) {
+        PipelineResult result = process(project);
+        handleEmail(result);
+    }
+
+    private PipelineResult process(Project project) {
         boolean testsPassed = executeTests(project);
         boolean deploySuccessful = executeDeployment(project, testsPassed);
-        handleEmail(testsPassed, deploySuccessful);
+
+        return new PipelineResult(testsPassed, deploySuccessful);
     }
 
     private boolean executeTests(Project project) {
@@ -51,20 +54,10 @@ public class Pipeline {
         return false;
     }
 
-    private void handleEmail(boolean testsPassed, boolean deploySuccessful) {
+    private void handleEmail(PipelineResult result) {
         if (config.sendEmailSummary()) {
             log.info("Sending email");
-
-            if (!testsPassed) {
-                emailer.send("Tests failed");
-                return;
-            }
-
-            if (deploySuccessful) {
-                emailer.send("Deployment completed successfully");
-            } else {
-                emailer.send("Deployment failed");
-            }
+            emailer.send(result.getEmailMessage());
         } else {
             log.info("Email disabled");
         }
