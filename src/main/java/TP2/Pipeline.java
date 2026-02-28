@@ -16,37 +16,39 @@ public class Pipeline {
         this.log = log;
     }
 
-    public void run(Project project) {
-        boolean testsPassed;
-        boolean deploySuccessful;
-
+    private boolean executeTests(Project project) {
         if (project.hasTests()) {
             if ("success".equals(project.runTests())) {
                 log.info("Tests passed");
-                testsPassed = true;
+                return true;
             } else {
                 log.error("Tests failed");
-                testsPassed = false;
+                return false;
             }
         } else {
             log.info("No tests");
-            testsPassed = true;
+            return true;
+        }
+    }
+
+    private boolean executeDeployment(Project project, boolean testsPassed) {
+        if (!testsPassed) {
+            return false;
         }
 
-        if (testsPassed) {
-            if ("success".equals(project.deploy())) {
-                log.info("Deployment successful");
-                deploySuccessful = true;
-            } else {
-                log.error("Deployment failed");
-                deploySuccessful = false;
-            }
+        if ("success".equals(project.deploy())) {
+            log.info("Deployment successful");
+            return true;
         } else {
-            deploySuccessful = false;
+            log.error("Deployment failed");
+            return false;
         }
+    }
 
+    private void handleEmail(boolean testsPassed, boolean deploySuccessful) {
         if (config.sendEmailSummary()) {
             log.info("Sending email");
+
             if (testsPassed) {
                 if (deploySuccessful) {
                     emailer.send("Deployment completed successfully");
@@ -59,5 +61,11 @@ public class Pipeline {
         } else {
             log.info("Email disabled");
         }
+    }
+
+    public void run(Project project) {
+        boolean testsPassed = executeTests(project);
+        boolean deploySuccessful = executeDeployment(project, testsPassed);
+        handleEmail(testsPassed, deploySuccessful);
     }
 }
