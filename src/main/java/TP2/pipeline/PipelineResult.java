@@ -1,4 +1,4 @@
-package TP2.dependencies;
+package TP2.pipeline;
 
 public class PipelineResult {
 

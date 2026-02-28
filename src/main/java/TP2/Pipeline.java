@@ -1,16 +1,23 @@
 package TP2;
 
 import TP2.dependencies.*;
+import TP2.pipeline.Deployer;
+import TP2.pipeline.PipelineResult;
+import TP2.pipeline.TestRunner;
 
 public class Pipeline {
     private final Config config;
     private final Emailer emailer;
     private final Logger log;
+    private final TestRunner testRunner;
+    private final Deployer deployer;
 
     public Pipeline(Config config, Emailer emailer, Logger log) {
         this.config = config;
         this.emailer = emailer;
         this.log = log;
+        this.testRunner = new TestRunner(log);
+        this.deployer = new Deployer(log);
     }
 
     public void run(Project project) {
@@ -19,39 +26,10 @@ public class Pipeline {
     }
 
     private PipelineResult process(Project project) {
-        boolean testsPassed = executeTests(project);
-        boolean deploySuccessful = executeDeployment(project, testsPassed);
+        boolean testsPassed = testRunner.run(project);
+        boolean deploySuccessful = deployer.deploy(project, testsPassed);
 
         return new PipelineResult(testsPassed, deploySuccessful);
-    }
-
-    private boolean executeTests(Project project) {
-        if (!project.hasTests()) {
-            log.info("No tests");
-            return true;
-        }
-
-        if (project.testsPassed()) {
-            log.info("Tests passed");
-            return true;
-        }
-
-        log.error("Tests failed");
-        return false;
-    }
-
-    private boolean executeDeployment(Project project, boolean testsPassed) {
-        if (!testsPassed) {
-            return false;
-        }
-
-        if (project.deploySuccessful()) {
-            log.info("Deployment successful");
-            return true;
-        }
-
-        log.error("Deployment failed");
-        return false;
     }
 
     private void handleEmail(PipelineResult result) {
