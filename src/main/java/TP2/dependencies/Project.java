@@ -13,7 +13,8 @@ public class Project {
         return new ProjectBuilder();
     }
 
-    private Project(boolean deploysSuccessfully, TestStatus unitTestStatus, boolean deploysSuccessfullyToStaging, TestStatus smokeTestStatus) {
+    private Project(boolean deploysSuccessfully, TestStatus unitTestStatus,
+                    boolean deploysSuccessfullyToStaging, TestStatus smokeTestStatus) {
         this.deploysSuccessfully = deploysSuccessfully;
         this.testStatus = unitTestStatus;
         this.deploysSuccessfullyToStaging = deploysSuccessfullyToStaging;
@@ -24,6 +25,14 @@ public class Project {
         return testStatus != NO_TESTS;
     }
 
+    public boolean testsPassed() {
+        return testStatus == PASSING_TESTS;
+    }
+
+    public boolean deploySuccessful() {
+        return deploysSuccessfully;
+    }
+
     public String runTests() {
         return testStatus == PASSING_TESTS ? "success" : "failure";
     }
@@ -31,6 +40,7 @@ public class Project {
     public String deploy() {
         return deploy(DeploymentEnvironment.PRODUCTION);
     }
+
     public String deploy(DeploymentEnvironment environment) {
         switch (environment) {
             case STAGING:
@@ -73,7 +83,8 @@ public class Project {
         }
 
         public Project build() {
-            return new Project(deploysSuccessfully, testStatus, deploysSuccessfullyToStaging, smokeTestStatus);
+            return new Project(deploysSuccessfully, testStatus,
+                    deploysSuccessfullyToStaging, smokeTestStatus);
         }
     }
 }
